@@ -1,0 +1,173 @@
+---
+title: "code for figure generation, G3 manuscript"
+author: "Gus Waneka"
+date: "1/2/2025"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(plyr)
+library(gtable)
+library(gridExtra)
+library(grid)
+
+
+library(RColorBrewer)
+require(RColorBrewer)
+```
+
+
+```{r}
+#code for generating Figure 1
+
+snv_indel<-read.table("indel_snv_dan_r.txt", sep="\t", header=TRUE)
+
+snv_indel$timeline <-factor(snv_indel$timeline,levels=c("new"))  
+snv_indel$mut_type = factor(snv_indel$mut_type, levels = c("SNVs", "Indels"))  
+snv_indel$gene = factor(snv_indel$gene, levels = c("RadA", "RecA3new", "RecA1", "OSB2", "WHY2")) 
+
+p<-ggplot(na.omit(snv_indel), aes(y=freq * 1e7, x=gene, color=genotype, group=genotype)) + geom_point(position=position_jitterdodge(jitter.width=0.1, dodge.width=0.65), alpha=0.7, stroke=0) +  facet_grid(rows=vars(mut_type), cols=vars(genome), scales = "free") + stat_summary(na.omit(snv_indel), geom = "point", fun = "mean", size = 5, shape = 95, position=position_dodge(width = 0.65), mapping=aes(y=freq * 1e7, x=gene, group=genotype, color=genotype)) + theme_bw() + scale_color_manual(values=c("firebrick3", "black")) + ylab ("Variant Frequency (x 10-7)")  + xlab ("Gene") + theme(legend.position = "top", legend.title = element_blank(), axis.text=element_text(size=7), legend.text=element_text(size=7), strip.text = element_text(size=8), axis.title=element_text(size=8, face="bold"), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank())  + guides(size = "none", shape = "none", color = "none", alpha="none")
+
+p
+
+ggsave("new_libs_sv_indel.order.pdf",p, width=3.5, height=4.5)
+```
+
+
+
+```{r}
+#code for generating Figure 2
+
+snv_spectrum<-read.table("all_files.snvsbyregion.snvs_collapsed.region_collapsed.hdr.txt", sep="\t", header=TRUE)
+
+snv_spectrum$genotype<-factor(snv_spectrum$genotype, levels=c('wild'))
+snv_spectrum$sub<-factor(snv_spectrum$sub, levels=c('AT>CG','AT>TA','CG>AT','CG>GC','CG>TA','AT>GC'))
+
+p<-ggplot(na.omit(snv_spectrum), aes(y=freq * 1e7, x=sub, color=timeline, group=timeline)) + geom_point(position=position_jitterdodge(jitter.width=0.1, dodge.width=0.65), alpha=0.7, stroke=0) +  stat_summary(na.omit(snv_spectrum), geom = "point", fun = "mean", size = 5, shape = 95, position=position_dodge(width = 0.65), mapping=aes(y=freq * 1e7, x=sub, group=timeline, color=timeline)) + theme_bw() + scale_color_manual(values=c( "coral2","cadetblue2")) + ylab ("Variant Frequency (x 10-7)")  + xlab ("Substitution class") + theme( axis.text.x = element_text(angle = 0),legend.position = "top", legend.title = element_blank(), axis.text=element_text(size=7), legend.text=element_text(size=7), strip.text = element_text(size=8), axis.title=element_text(size=8, face="bold"), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank()) + guides(size = "none", shape = "none", color = "none", alpha="none") + facet_wrap(~genome)
+
+p
+
+ggsave("WT_oldvnew_spectrum.pdf",p, width=6.7, height=3)
+```
+
+
+
+```{r}
+#code for generating Figure 3
+
+snv_region<-read.table("all_files.snvsbyregion.snvs_collapsed.total.hdr.msh1.txt", sep="\t", header=TRUE)
+
+p<-ggplot(na.omit(snv_region), aes(y=freq_floor_log, x=region, color=genotype, group=genotype)) + geom_point(position=position_jitterdodge(jitter.width=0.1, dodge.width=0.65), alpha=0.7, stroke=0) +  facet_grid(cols=vars(genome), rows =vars(genotype),scales = "free")  + stat_summary(na.omit(snv_region), geom = "point", fun = "mean", size = 5, shape = 95, position=position_dodge(width = 0.65), mapping=aes(y=freq_floor_log, x=region, group=genotype, color=genotype)) + theme_bw() + scale_color_manual(values=c("firebrick3", "black")) + ylab ("Variant Frequency (Log)")  + xlab ("Region") + theme( axis.text.x = element_text(angle = 0),legend.position = "top", legend.title = element_blank(), axis.text=element_text(size=7), legend.text=element_text(size=7), strip.text = element_text(size=8), axis.title=element_text(size=8, face="bold"), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank())  + guides(size = "none", shape = "none", color = "none", alpha="none")
+
+p
+
+ggsave("MSH1_v_old_wild_plastid_mito_snv_by_region.pdf",p, width=6.7, height=4.5)
+```
+
+
+```{r}
+#code for generating Figure 4
+
+snv_region<-read.table("all_files.snvsbystrand.hdr.txt", sep="\t", header=TRUE)
+
+snv_region$extraction <-factor(snv_region$extraction,levels=c("mt")) 
+snv_region$genotype <-factor(snv_region$genotype,levels=c('wild')) 
+snv_region$timeline <-factor(snv_region$timeline,levels=c('old')) 
+snv_region$sub <-factor(snv_region$sub,levels=c('C>T','G>A')) 
+
+p<-ggplot(na.omit(snv_region), aes(y=freq_floor_log, x=region, color=sub, group=sub)) + geom_point(position=position_jitterdodge(jitter.width=0.1, dodge.width=0.65), alpha=0.7, stroke=0) + stat_summary(na.omit(snv_region), geom = "point", fun = "mean", size = 5, shape = 95, position=position_dodge(width = 0.65), mapping=aes(y=freq_floor_log, x=region, group=sub, color=sub)) + theme_bw() + scale_color_manual(values=c( "coral2","cadetblue2")) + ylab ("Variant Frequency (x 10-7)")  + xlab ("Region") + theme( axis.text.x = element_text(angle = 0),legend.position = "top", legend.title = element_blank(), axis.text=element_text(size=7), legend.text=element_text(size=7), strip.text = element_text(size=8), axis.title=element_text(size=8, face="bold"), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank())  + guides(size = "none", shape = "none", color = "none", alpha="none")
+
+p
+
+ggsave("wt_new_v_old_mito_snv_by_strand_c_to_t.pdf",p, width=3.5, height=2.5)
+```
+
+
+
+```{r}
+#code for generating Figure 5
+
+snv_region<-read.table("all_files.snvsbystrand.hdr.msh1.txt", sep="\t", header=TRUE)
+
+snv_region$ds_sub = factor(snv_region$ds_sub, levels = c("AT>GC", "CG>TA"))
+
+p<-ggplot(na.omit(snv_region), aes(y=freq_floor_log, x=region, color=as.factor(subly), group=as.factor(subly))) + geom_point(position=position_jitterdodge(jitter.width=0.1, dodge.width=0.65), alpha=0.7, stroke=0) +  facet_grid(rows=vars(genome), cols=vars(ds_sub), scales = "free") + stat_summary(na.omit(snv_region), geom = "point", fun = "mean", size = 5, shape = 95, position=position_dodge(width = 0.65), mapping=aes(y=freq_floor_log, x=region, group=as.factor(subly), color=as.factor(subly))) + theme_bw() + scale_color_manual(values=c("coral2","cadetblue2")) + ylab ("Variant Frequency (Log10)")  + xlab ("Gene") + theme( axis.text.x = element_text(angle = 0),legend.position = "top", legend.title = element_blank(), axis.text=element_text(size=7), legend.text=element_text(size=7), strip.text = element_text(size=8), axis.title=element_text(size=8, face="bold"), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank())  + guides(size = "none", shape = "none", color = "none", alpha="none")
+
+p
+
+ggsave("MSH1_plastid_mito_snv_by_strand_by_snv_trans.pdf",p, width=6.7, height=4)
+```
+
+```{r}
+#code for generating Figure 6
+
+snv_trin<-read.table("all_files.trinuc_sum.hdr.txt", sep="\t", header=TRUE)
+
+snv_trin$genotype <-factor(snv_trin$genotype,levels=c('wild')) 
+snv_trin$sub <-factor(snv_trin$sub,levels=c('CG>TA')) 
+snv_trin$timelinee <-factor(snv_trin$timeline,levels=c('old'))
+
+p<-ggplot(na.omit(snv_trin), aes(y=freq *1e7, x=trinuc, color=genotype,fill=genotype)) + geom_bar(position = "dodge", stat = "summary", fun = mean,width=.7) + stat_summary(na.omit(snv_trin),fun.data = mean_se, geom = "errorbar", position="dodge", mapping=aes(y=freq*1e7, x=trinuc, group=genotype, color=genotype,width=.5)) +  facet_grid(rows=vars(genome), scales = "free") + theme_bw() + scale_color_manual(values=c( "black")) + scale_fill_manual(values=c( "black")) + ylab ("Variant Frequency (x 10-7)")  + xlab ("Trinuc") + theme( axis.text.x = element_text(angle = 90),legend.position = "top", legend.title = element_blank(), axis.text=element_text(size=7), legend.text=element_text(size=7), strip.text = element_text(size=8), axis.title=element_text(size=8, face="bold"), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank())  + guides(size = "none", shape = "none", color = "none", alpha="none",fill="none")
+
+p
+
+ggsave("wt_old_plastid_mito_CG_to_TA_by_trin.pdf",p, width=3.5, height=4)
+```
+
+```{r}
+#code for generating Figure 7
+
+snv_trin<-read.table("all_files.trinuc_sum.hdr.txt", sep="\t", header=TRUE)
+
+snv_trin$genotype <-factor(snv_trin$genotype,levels=c('mut')) 
+snv_trin$gene <-factor(snv_trin$gene,levels=c('MSH1CS3246','MSH1CS3372')) 
+snv_trin$sub <-factor(snv_trin$sub,levels=c('AT>GC','CG>TA')) 
+
+p<-ggplot(na.omit(snv_trin), aes(y=freq *1e7, x=trinuc, color=genotype,fill=genotype)) + geom_bar(position = "dodge", stat = "summary", fun = mean,width=.7) + stat_summary(na.omit(snv_trin),fun.data = mean_se, geom = "errorbar", position="dodge", mapping=aes(y=freq*1e7, x=trinuc, group=genotype, color=genotype,width=.5)) +  facet_grid(rows=vars(genome),cols=vars(sub), scales = "free") + theme_bw() + scale_color_manual(values=c( "firebrick3")) + scale_fill_manual(values=c( "firebrick3")) + ylab ("Variant Frequency (x 10-7)")  + xlab ("Trinuc") + theme( axis.text.x = element_text(angle = 90),legend.position = "top", legend.title = element_blank(), axis.text=element_text(size=7), legend.text=element_text(size=7), strip.text = element_text(size=8), axis.title=element_text(size=8, face="bold"), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank())  + guides(size = "none", shape = "none", color = "none", alpha="none",fill="none")
+
+p
+
+ggsave("MSH1_plastid_mito_by_SNV_by_trin.pdf",p, width=6.7, height=4)
+```
+
+
+```{r}
+#code for generating Figure 8
+depth_DF<-read.table("all_duplex_nanopore_mito.depth_pooled_normed.new.txt", sep="\t", header=TRUE)
+
+depth_DF$gene<-factor(depth_DF$gene,levels = c("MSH1","RadA","RecA3","Why2"))
+
+depth_p<-ggplot(na.omit(depth_DF), aes(x=window,y=ratio)) +           #assign x-axis and y-axis variables
+geom_line(aes(color=seq)) + scale_color_manual(values=c(duplex="red",nanopore="blue"))+
+theme_bw() +                                                      
+theme(strip.text.x = element_text(size =7)) +                       #specify font size
+theme(axis.title = element_text(size = 7, face="bold"), axis.text = element_text(size = 6),legend.position = "bottom", legend.text=element_text(size=6), legend.title=element_blank()) +   #specify font size and axis
+labs(x="mtDNA window number",y="Normalized coverage ratio mutant/wild")+         #add axis titles
+theme(axis.text.x = element_text(angle = 45))  +
+  scale_x_continuous(breaks=seq(0,368,20)  )     +scale_y_log10(breaks=c(0.125,0.25,.5,1,2,4),limits=c(0.25,4))   + guides( color = "none")           
+
+p2temp<-depth_p+ facet_wrap(~gene, nrow=6)  
+  
+p2temp  
+
+ggsave("duplex_nanopore_mito_norm_depth_by_position_long.pdf",p2temp, width=6.7, height=4.5)
+```
+
+
+```{r}
+#Code for generating Figure 10
+hits<-read.table("all_files.repeat_v_blastn.10_plus_mito.3_plus_plastid.hdr.rinput.txt", sep="\t", header=TRUE)
+
+p2<-ggplot(na.omit(hits), aes(x=alt_gene, y=freq_floor_log, group=alt_gene)) + theme_bw() +
+  geom_point(aes(color=colr_1, size=(rpt_cov),shape=(sample), alpha=0.1), position=position_dodge(width=0.2))  + scale_shape_manual(values=c(19,1)) + scale_color_manual(values=c("firebrick3", "black")) + stat_summary(na.omit(hits), geom = "point", fun = "mean", size = 5, shape = 95, position=position_dodge(width = 0.2), mapping=aes(y=freq_floor_log, x=alt_gene, group=alt_gene, color=colr_1))
+
+p2temp<-p2 + facet_wrap(~genome, scales="free")+ guides( shape = "none", color = "none", alpha="none", size="none") + labs(x="Gene",y="Mutation frequency (recombination events/all repeat coverage: log10)") + ylim(-3.6,-1) + theme(axis.title = element_text(size = 7, face="bold"),axis.text = element_text(size = 6)) + scale_size_binned() +scale_size(range = c(0, 7))# + axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
+
+p2temp
+
+ggsave("freq_by_gene__mito_plastid_hifisr_log.nokey.pdf",p2temp, width=6.7, height=3)
+```
+
