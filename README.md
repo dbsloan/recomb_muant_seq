@@ -1,4 +1,4 @@
-# recomb_muant_seq
+# recomb_muatnt_seq
 
 ### Summary
 
